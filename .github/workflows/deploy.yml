@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write  # gh-pages에 push 권한 필요
   pages: write
   id-token: write
 
