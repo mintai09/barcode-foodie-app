@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/barcode-foodie-app/static/css/main.18cd3045.css",
+    "main.js": "/barcode-foodie-app/static/js/main.18971b41.js",
+    "index.html": "/barcode-foodie-app/index.html",
+    "main.18cd3045.css.map": "/barcode-foodie-app/static/css/main.18cd3045.css.map",
+    "main.18971b41.js.map": "/barcode-foodie-app/static/js/main.18971b41.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.18cd3045.css",
+    "static/js/main.18971b41.js"
+  ]
+}
