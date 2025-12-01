@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "AI-powered barcode scanning app for allergy patients with voice guidance",
   "private": true,
-  "homepage": "https://[YOUR_USERNAME].github.io/barcode-foodie-app",
+  "homepage": "https://mintai09.github.io/barcode-foodie-app",
   "dependencies": {
     "html5-qrcode": "^2.3.8",
     "quagga": "^0.12.1",
