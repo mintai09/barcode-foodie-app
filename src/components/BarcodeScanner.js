@@ -10,8 +10,10 @@ function BarcodeScanner({ onBarcodeScanned, speak }) {
   const [uploadedImage, setUploadedImage] = useState(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const html5QrcodeRef = useRef(null);
+  const quaggaInitializedRef = useRef(false);
   const lastScanTimeRef = useRef(0);
   const fileInputRef = useRef(null);
+  const barcodeFoundRef = useRef(false);
 
   // 한국 바코드 검증 및 정제 함수
   const validateAndCleanBarcode = (rawBarcode) => {
@@ -88,88 +90,175 @@ function BarcodeScanner({ onBarcodeScanned, speak }) {
     return numericOnly;
   };
 
+  // 바코드 처리 (두 스캐너 중 먼저 응답한 것 사용)
+  const handleBarcodeDetected = (rawBarcode, source) => {
+    // 이미 바코드를 찾았으면 무시
+    if (barcodeFoundRef.current) {
+      return;
+    }
+
+    const now = Date.now();
+
+    // 중복 스캔 방지 (500ms 내 무시)
+    if (now - lastScanTimeRef.current < 500) {
+      return;
+    }
+
+    console.log(`📊 [${source}] Raw 스캔 결과:`, rawBarcode);
+
+    // 바코드 검증 및 정제
+    const validatedBarcode = validateAndCleanBarcode(rawBarcode);
+
+    if (!validatedBarcode) {
+      console.warn(`❌ [${source}] 유효하지 않은 바코드, 재시도`);
+      return;
+    }
+
+    // 중복 바코드 체크
+    if (validatedBarcode === lastScannedCode) {
+      console.log(`⏭️ [${source}] 중복 바코드 무시`);
+      return;
+    }
+
+    // 바코드 발견 플래그 설정
+    barcodeFoundRef.current = true;
+    lastScanTimeRef.current = now;
+    setLastScannedCode(validatedBarcode);
+
+    console.log(`✅ [${source}] 최종 바코드:`, validatedBarcode);
+    speak(`바코드 ${validatedBarcode}를 스캔했습니다.`);
+    onBarcodeScanned(validatedBarcode);
+
+    // 모든 스캐너 중지
+    stopAllScanners();
+  };
+
+  // 모든 스캐너 중지
+  const stopAllScanners = () => {
+    // Html5Qrcode 중지
+    if (html5QrcodeRef.current) {
+      html5QrcodeRef.current.stop().catch(err =>
+        console.log('Html5Qrcode stop error:', err)
+      );
+    }
+
+    // Quagga 중지
+    if (quaggaInitializedRef.current) {
+      Quagga.stop();
+      quaggaInitializedRef.current = false;
+    }
+  };
+
   useEffect(() => {
     speak('바코드 스캔 화면입니다. 제품 뒷면 하단의 바코드를 카메라에 비추거나, 수동으로 입력해주세요.');
 
     const startScanner = async () => {
       try {
-        // Html5Qrcode 인스턴스 생성
+        barcodeFoundRef.current = false;
+
+        // 📱 Scanner 1: Html5Qrcode 시작
         html5QrcodeRef.current = new Html5Qrcode('barcode-reader');
 
-        // 카메라 목록 가져오기
         const devices = await Html5Qrcode.getCameras();
         console.log('📷 사용 가능한 카메라:', devices);
 
         if (devices && devices.length > 0) {
-          // 후면 카메라 우선 선택
           const backCamera = devices.find(device =>
             device.label.toLowerCase().includes('back') ||
             device.label.toLowerCase().includes('rear') ||
             device.label.toLowerCase().includes('후면') ||
             device.label.toLowerCase().includes('환경')
-          ) || devices[devices.length - 1]; // 마지막 카메라 사용 (보통 후면)
+          ) || devices[devices.length - 1];
 
-          console.log('✅ 선택된 카메라:', backCamera.label);
+          console.log('🎬 [앙상블] 두 개의 스캐너 시작...');
+          console.log('✅ [Scanner 1] Html5Qrcode 시작');
 
-          // 스캐너 시작 - 한국 바코드 최적화 설정
+          // Html5Qrcode 시작 (QR 코드 및 일부 바코드)
           await html5QrcodeRef.current.start(
             backCamera.id,
             {
-              fps: 10, // 초당 10프레임 스캔
-              qrbox: { width: 320, height: 100 }, // 바코드 형태에 맞게 가로로 넓게
-              aspectRatio: 3.2, // 바코드 비율
+              fps: 10,
+              qrbox: { width: 350, height: 120 }, // 바코드 영역 확대
+              aspectRatio: 2.9,
               disableFlip: false,
               videoConstraints: {
-                facingMode: 'environment', // 후면 카메라
-                width: { ideal: 1920 }, // 고해상도
+                facingMode: 'environment',
+                width: { ideal: 1920 },
                 height: { ideal: 1080 }
               }
             },
             (decodedText, decodedResult) => {
-              const now = Date.now();
-
-              // 중복 스캔 방지 (500ms 내 같은 바코드 무시)
-              if (now - lastScanTimeRef.current < 500) {
-                return;
-              }
-
-              console.log('📊 Raw 스캔 결과:', {
-                text: decodedText,
-                format: decodedResult.result.format?.formatName || 'unknown'
-              });
-
-              // 바코드 검증 및 정제
-              const validatedBarcode = validateAndCleanBarcode(decodedText);
-
-              if (!validatedBarcode) {
-                console.warn('❌ 유효하지 않은 바코드, 재시도');
-                return;
-              }
-
-              // 중복 바코드 체크
-              if (validatedBarcode === lastScannedCode) {
-                console.log('⏭️ 중복 바코드 무시');
-                return;
-              }
-
-              lastScanTimeRef.current = now;
-              setLastScannedCode(validatedBarcode);
-
-              console.log('✅ 최종 바코드:', validatedBarcode);
-              speak(`바코드 ${validatedBarcode}를 스캔했습니다.`);
-              onBarcodeScanned(validatedBarcode);
-
-              // 스캔 후 카메라 중지
-              if (html5QrcodeRef.current) {
-                html5QrcodeRef.current.stop().catch(err =>
-                  console.log('Scanner stop error:', err)
-                );
-              }
+              handleBarcodeDetected(decodedText, 'Html5Qrcode');
             },
             (errorMessage) => {
-              // 스캔 실패는 무시 (계속 시도)
+              // 스캔 실패는 무시
             }
           );
+
+          // 📱 Scanner 2: Quagga 시작 (전문 바코드 스캐너)
+          console.log('✅ [Scanner 2] Quagga 시작');
+
+          // 약간의 지연 후 Quagga 시작 (비디오 스트림 공유)
+          setTimeout(() => {
+            Quagga.init({
+              inputStream: {
+                name: 'Live',
+                type: 'LiveStream',
+                target: document.querySelector('#barcode-reader video'), // Html5Qrcode의 비디오 스트림 재사용
+                constraints: {
+                  facingMode: 'environment',
+                  width: { ideal: 1920 },
+                  height: { ideal: 1080 }
+                }
+              },
+              decoder: {
+                // 앙상블: 여러 리더 동시 실행
+                readers: [
+                  'ean_reader',        // EAN-13 (한국 바코드)
+                  'ean_8_reader',      // EAN-8
+                  'code_128_reader',   // Code 128
+                  'code_39_reader',    // Code 39
+                  'upc_reader',        // UPC-A
+                  'upc_e_reader'       // UPC-E
+                ],
+                multiple: false
+              },
+              locator: {
+                patchSize: 'medium',
+                halfSample: true
+              },
+              numOfWorkers: navigator.hardwareConcurrency || 4, // CPU 코어 활용
+              frequency: 10 // 초당 10회 스캔
+            }, (err) => {
+              if (err) {
+                console.warn('⚠️ [Scanner 2] Quagga 초기화 실패:', err);
+                return;
+              }
+
+              console.log('🎯 [Scanner 2] Quagga 준비 완료');
+              quaggaInitializedRef.current = true;
+
+              // Quagga 바코드 감지 이벤트
+              Quagga.onDetected((result) => {
+                if (result && result.codeResult && result.codeResult.code) {
+                  // 정확도 체크 (에러율 낮은 것만 채택)
+                  const error = result.codeResult.decodedCodes
+                    .filter(code => code.error !== undefined)
+                    .reduce((sum, code) => sum + code.error, 0) /
+                    result.codeResult.decodedCodes.filter(code => code.error !== undefined).length;
+
+                  if (error < 0.15) { // 에러율 15% 미만만 채택
+                    console.log(`📊 [Scanner 2] 정확도: ${((1 - error) * 100).toFixed(1)}%`);
+                    handleBarcodeDetected(result.codeResult.code, 'Quagga');
+                  } else {
+                    console.log(`⚠️ [Scanner 2] 정확도 낮음: ${((1 - error) * 100).toFixed(1)}%, 무시`);
+                  }
+                }
+              });
+
+              Quagga.start();
+            });
+          }, 500); // Html5Qrcode 시작 후 0.5초 대기
 
           setIsScanning(true);
         } else {
@@ -184,13 +273,9 @@ function BarcodeScanner({ onBarcodeScanned, speak }) {
 
     startScanner();
 
-    // 컴포넌트 언마운트 시 스캐너 정리
+    // 컴포넌트 언마운트 시 모든 스캐너 정리
     return () => {
-      if (html5QrcodeRef.current && isScanning) {
-        html5QrcodeRef.current.stop().catch(err =>
-          console.log('Cleanup error:', err)
-        );
-      }
+      stopAllScanners();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
