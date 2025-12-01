@@ -1,0 +1,370 @@
+.product-analysis {
+  max-width: 900px;
+  margin: 0 auto;
+  animation: fadeInUp 0.5s ease;
+}
+
+.voice-mode-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.voice-mode-banner.enabled {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.voice-mode-banner.disabled {
+  background: #f5f5f5;
+  color: #666;
+  border: 2px dashed #ddd;
+}
+
+.voice-mode-icon {
+  font-size: 1.5rem;
+}
+
+.voice-mode-text {
+  flex: 1;
+}
+
+.risk-banner {
+  color: white;
+  padding: 30px;
+  border-radius: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.risk-icon {
+  font-size: 4rem;
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.risk-content h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.risk-reasons p {
+  font-size: 1.1rem;
+  margin: 5px 0;
+  opacity: 0.95;
+}
+
+.product-info-card {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  margin-bottom: 20px;
+}
+
+.product-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 25px;
+  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 25px;
+}
+
+.product-icon {
+  font-size: 4rem;
+}
+
+.product-header h3 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.brand {
+  color: #666;
+  font-size: 1.1rem;
+  margin: 5px 0;
+}
+
+.price {
+  color: #5B8FFF;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.barcode-display {
+  margin-top: 12px;
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #5B8FFF;
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+}
+
+.barcode-label {
+  color: #666;
+  margin-right: 8px;
+  font-weight: 600;
+}
+
+.barcode-number {
+  color: #333;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.not-found-notice {
+  margin-top: 15px;
+  padding: 15px;
+  background: linear-gradient(135deg, #FFF3CD 0%, #FFF8E1 100%);
+  border-left: 4px solid #FFA500;
+  border-radius: 8px;
+}
+
+.not-found-notice p {
+  margin: 8px 0;
+  color: #856404;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.not-found-notice p:first-child {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.info-section {
+  margin-bottom: 25px;
+}
+
+.info-section h4 {
+  color: #5B8FFF;
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.allergen-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.allergen-tag {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.danger-tag {
+  background: linear-gradient(135deg, #FF4444 0%, #E53935 100%);
+  color: white;
+}
+
+.ingredients-text {
+  background: #f8f9ff;
+  padding: 15px;
+  border-radius: 10px;
+  color: #555;
+  line-height: 1.7;
+  font-size: 1rem;
+}
+
+.warning-box {
+  background: #FFF3E0;
+  padding: 20px;
+  border-radius: 15px;
+  border-left: 5px solid #FF9800;
+}
+
+.warning-box h4 {
+  color: #F57C00;
+}
+
+.warning-box p {
+  color: #555;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.nutrition-item {
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+  border: 2px solid #e0e7ff;
+  transition: all 0.3s ease;
+}
+
+.nutrition-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(91, 143, 255, 0.2);
+}
+
+.nutrition-label {
+  display: block;
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.nutrition-value {
+  display: block;
+  color: #5B8FFF;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.voice-btn {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  padding: 18px 24px;
+  border-radius: 15px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.voice-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.voice-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.voice-btn:disabled {
+  background: linear-gradient(135deg, #999 0%, #888 100%);
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.voice-btn span {
+  font-size: 1.4rem;
+}
+
+.scan-another-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #5B8FFF 0%, #4A7DE8 100%);
+  color: white;
+  border: none;
+  padding: 18px;
+  border-radius: 15px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.scan-another-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(91, 143, 255, 0.4);
+}
+
+.scan-another-btn span {
+  font-size: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .risk-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 25px 20px;
+  }
+
+  .risk-icon {
+    font-size: 3rem;
+  }
+
+  .risk-content h2 {
+    font-size: 1.6rem;
+  }
+
+  .risk-reasons p {
+    font-size: 1rem;
+  }
+
+  .product-info-card {
+    padding: 20px;
+  }
+
+  .product-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .product-header h3 {
+    font-size: 1.5rem;
+  }
+
+  .nutrition-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .action-buttons {
+    grid-template-columns: 1fr;
+  }
+}
