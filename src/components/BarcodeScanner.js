@@ -29,60 +29,66 @@ function BarcodeScanner({ onBarcodeScanned, speak }) {
       return null;
     }
 
-    // 3. 14자리인 경우 13자리로 정규화 (앞의 0 제거)
+    // 3. 14자리 바코드 (식약처 API에서 사용하는 형식) - 그대로 반환
     if (numericOnly.length === 14 && numericOnly.startsWith('0')) {
-      const normalized = numericOnly.substring(1);
-      console.log('🔧 14자리 -> 13자리 정규화:', numericOnly, '->', normalized);
-      return normalized;
+      console.log('✅ 14자리 바코드 (식약처 형식):', numericOnly);
+      return numericOnly;
     }
 
-    // 4. 한국 바코드 표준 검증
-    // EAN-13: 13자리, 한국 제품은 880으로 시작
+    // 4. 한국 바코드 표준 검증 및 14자리 변환
+    // EAN-13: 13자리 → 14자리로 변환 (앞에 0 추가)
     // EAN-8: 8자리
     // UPC-A: 12자리
 
     if (numericOnly.length === 13) {
+      // 13자리를 14자리로 변환 (식약처 API 표준)
+      const barcode14 = '0' + numericOnly;
       if (numericOnly.startsWith('880')) {
-        console.log('✅ 한국 EAN-13 바코드:', numericOnly);
-        return numericOnly;
+        console.log('✅ 한국 EAN-13 바코드 → 14자리 변환:', numericOnly, '→', barcode14);
+        return barcode14;
       } else {
-        console.log('⚠️ 해외 EAN-13 바코드:', numericOnly);
-        return numericOnly; // 해외 제품도 허용
+        console.log('⚠️ 해외 EAN-13 바코드 → 14자리 변환:', numericOnly, '→', barcode14);
+        return barcode14; // 해외 제품도 14자리로 변환
       }
     }
 
     if (numericOnly.length === 8) {
-      console.log('✅ EAN-8 바코드:', numericOnly);
-      return numericOnly;
+      // 8자리를 14자리로 변환 (앞에 000000 추가)
+      const barcode14 = '000000' + numericOnly;
+      console.log('✅ EAN-8 바코드 → 14자리 변환:', numericOnly, '→', barcode14);
+      return barcode14;
     }
 
     if (numericOnly.length === 12) {
-      console.log('✅ UPC-A 바코드:', numericOnly);
-      return numericOnly;
+      // 12자리를 14자리로 변환 (앞에 00 추가)
+      const barcode14 = '00' + numericOnly;
+      console.log('✅ UPC-A 바코드 → 14자리 변환:', numericOnly, '→', barcode14);
+      return barcode14;
     }
 
     // 5. 잘못 인식된 경우 처리
     if (numericOnly.length > 14) {
-      // 14자리 추출 후 정규화 시도
+      // 14자리 추출 (식약처 API 형식)
       const extracted14 = numericOnly.substring(0, 14);
       if (extracted14.startsWith('0')) {
-        const normalized = extracted14.substring(1);
-        console.log('🔧 14자리로 추출 후 정규화:', normalized);
-        return normalized;
+        console.log('🔧 14자리로 추출 (식약처 형식):', extracted14);
+        return extracted14;
       }
 
-      // 13자리 추출 시도
+      // 13자리 추출 시도 → 14자리로 변환
       const extracted13 = numericOnly.substring(0, 13);
       if (extracted13.startsWith('880')) {
-        console.log('🔧 13자리로 보정:', extracted13);
-        return extracted13;
+        const barcode14 = '0' + extracted13;
+        console.log('🔧 13자리로 추출 후 14자리 변환:', extracted13, '→', barcode14);
+        return barcode14;
       }
 
-      // 뒤에서 13자리 추출 시도
+      // 뒤에서 13자리 추출 시도 → 14자리로 변환
       const extracted13End = numericOnly.substring(numericOnly.length - 13);
       if (extracted13End.startsWith('880')) {
-        console.log('🔧 뒤에서 13자리 보정:', extracted13End);
-        return extracted13End;
+        const barcode14 = '0' + extracted13End;
+        console.log('🔧 뒤에서 13자리 추출 후 14자리 변환:', extracted13End, '→', barcode14);
+        return barcode14;
       }
     }
 
@@ -137,15 +143,27 @@ function BarcodeScanner({ onBarcodeScanned, speak }) {
   const stopAllScanners = () => {
     // Html5Qrcode 중지
     if (html5QrcodeRef.current) {
-      html5QrcodeRef.current.stop().catch(err =>
-        console.log('Html5Qrcode stop error:', err)
-      );
+      try {
+        const state = html5QrcodeRef.current.getState();
+        // 스캐너가 실행 중일 때만 중지
+        if (state === 2) { // Html5QrcodeScannerState.SCANNING
+          html5QrcodeRef.current.stop().catch(err =>
+            console.log('Html5Qrcode stop error:', err)
+          );
+        }
+      } catch (err) {
+        console.log('Html5Qrcode state check error:', err);
+      }
     }
 
     // Quagga 중지
     if (quaggaInitializedRef.current) {
-      Quagga.stop();
-      quaggaInitializedRef.current = false;
+      try {
+        Quagga.stop();
+        quaggaInitializedRef.current = false;
+      } catch (err) {
+        console.log('Quagga stop error:', err);
+      }
     }
   };
 

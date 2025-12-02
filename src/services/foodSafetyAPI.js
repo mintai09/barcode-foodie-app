@@ -62,60 +62,55 @@ const extractAllergensFromText = (text) => {
  */
 const fetchFromFoodSafetyAPI = async (barcode) => {
   try {
-    // 바코드 정규화
+    // 바코드 정규화 - 식약처 API는 14자리 바코드 (앞에 0 추가) 사용
     let normalizedBarcode = barcode;
 
-    // 14자리이고 0으로 시작하는 경우 앞의 0 제거
-    if (barcode.length === 14 && barcode.startsWith('0')) {
-      normalizedBarcode = barcode.substring(1);
-      console.log(`바코드 정규화: ${barcode} (14자리) -> ${normalizedBarcode} (13자리)`);
+    // 13자리 바코드인 경우 앞에 0 추가하여 14자리로 변환
+    if (barcode.length === 13) {
+      normalizedBarcode = '0' + barcode;
+      console.log(`바코드 정규화: ${barcode} (13자리) -> ${normalizedBarcode} (14자리, 0 추가)`);
     }
-    // 13자리이지만 0으로 시작하고 880으로 시작하지 않는 경우 (잘못된 바코드)
-    else if (barcode.length === 13 && barcode.startsWith('0') && !barcode.startsWith('088')) {
-      normalizedBarcode = barcode.substring(1);
-      console.log(`바코드 정규화 (13자리 오류 수정): ${barcode} -> ${normalizedBarcode} (12자리)`);
-    }
-    // 13자리이고 정상적인 경우
-    else if (barcode.length === 13) {
+    // 14자리이고 0으로 시작하는 경우 그대로 사용
+    else if (barcode.length === 14 && barcode.startsWith('0')) {
       normalizedBarcode = barcode;
-      console.log(`바코드 정상: ${barcode} (13자리)`);
+      console.log(`바코드 정상: ${barcode} (14자리)`);
     }
-    // 12자리인 경우 그대로 사용
-    else if (barcode.length === 12 || barcode.length === 8) {
-      normalizedBarcode = barcode;
-      console.log(`바코드 정상: ${barcode} (${barcode.length}자리)`);
+    // 12자리인 경우 앞에 00 추가
+    else if (barcode.length === 12) {
+      normalizedBarcode = '00' + barcode;
+      console.log(`바코드 정규화: ${barcode} (12자리) -> ${normalizedBarcode} (14자리, 00 추가)`);
+    }
+    // 8자리인 경우 앞에 000000 추가
+    else if (barcode.length === 8) {
+      normalizedBarcode = '000000' + barcode;
+      console.log(`바코드 정규화: ${barcode} (8자리) -> ${normalizedBarcode} (14자리)`);
     }
     else {
-      console.warn(`비표준 바코드 길이: ${barcode.length}자리 - ${barcode}`);
+      console.warn(`비표준 바코드 길이: ${barcode.length}자리 - ${barcode}, 그대로 사용`);
     }
 
     console.log(`원본 바코드: ${barcode}, 정규화된 바코드: ${normalizedBarcode}`);
 
-    // XML 형식으로 요청 (파라미터명: bar_cd)
-    // GitHub Pages 배포 시 프록시를 사용할 수 없으므로 직접 API 호출
-    const url = `https://apis.data.go.kr/1471000/FoodQrInfoService01/getFoodQrAllrgyInfo?serviceKey=${API_KEY}&pageNo=1&numOfRows=100&bar_cd=${normalizedBarcode}`;
+    // 직접 API 호출 (프록시 없이, JSON 형식)
+    const url = `https://apis.data.go.kr/1471000/FoodQrInfoService01/getFoodQrAllrgyInfo01?serviceKey=${API_KEY}&pageNo=1&numOfRows=100&type=json&brcd_no=${normalizedBarcode}`;
 
-    console.log(`식약처 API 호출: 바코드 ${normalizedBarcode}`);
+    console.log(`식약처 API 직접 호출: 바코드 ${normalizedBarcode}`);
+    console.log(`요청 URL: ${url}`);
 
     const response = await fetch(url);
-    const xmlText = await response.text();
 
-    console.log('API 응답 (XML):', xmlText);
-
-    // XML 파싱
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-
-    // 에러 체크
-    const parseError = xmlDoc.querySelector('parsererror');
-    if (parseError) {
-      console.error('XML 파싱 오류:', parseError.textContent);
+    if (!response.ok) {
+      console.error(`API 응답 오류: ${response.status} ${response.statusText}`);
       return null;
     }
 
+    const data = await response.json();
+
+    console.log('API 응답 (JSON):', data);
+
     // 응답 헤더 확인
-    const resultCode = xmlDoc.querySelector('resultCode')?.textContent;
-    const resultMsg = xmlDoc.querySelector('resultMsg')?.textContent;
+    const resultCode = data.header?.resultCode;
+    const resultMsg = data.header?.resultMsg;
 
     console.log(`API 응답 코드: ${resultCode}, 메시지: ${resultMsg}`);
 
@@ -125,7 +120,7 @@ const fetchFromFoodSafetyAPI = async (barcode) => {
     }
 
     // 아이템 목록 가져오기
-    const items = xmlDoc.querySelectorAll('item');
+    const items = data.body?.items || [];
 
     if (items.length === 0) {
       console.log('API에서 제품 정보를 찾지 못했습니다.');
@@ -166,8 +161,9 @@ const fetchFromFoodSafetyAPI = async (barcode) => {
     let productName = '';
 
     items.forEach((item) => {
-      const allergenName = item.querySelector('ALG_CSG_MTR_NM')?.textContent || '';
-      productName = item.querySelector('PRDCT_NM')?.textContent || '알 수 없는 제품';
+      // JSON 응답에서 직접 필드 접근
+      const allergenName = item.ALG_CSG_MTR_NM || '';
+      productName = item.PRDCT_NM || '알 수 없는 제품';
 
       if (allergenName) {
         allergenDetails.push(allergenName);
@@ -224,28 +220,28 @@ const fetchFromFoodSafetyAPI = async (barcode) => {
  */
 const fetchFromHACCPAPI = async (barcode) => {
   try {
-    // 바코드 정규화
+    // 바코드 정규화 - 14자리로 통일
     let normalizedBarcode = barcode;
 
-    // 14자리이고 0으로 시작하는 경우 앞의 0 제거
+    // 14자리 바코드 그대로 사용
     if (barcode.length === 14 && barcode.startsWith('0')) {
-      normalizedBarcode = barcode.substring(1);
-      console.log(`HACCP - 바코드 정규화: ${barcode} (14자리) -> ${normalizedBarcode} (13자리)`);
+      normalizedBarcode = barcode;
+      console.log(`HACCP - 바코드 정상: ${barcode} (14자리)`);
     }
-    // 13자리이지만 0으로 시작하고 880으로 시작하지 않는 경우 (잘못된 바코드)
-    else if (barcode.length === 13 && barcode.startsWith('0') && !barcode.startsWith('088')) {
-      normalizedBarcode = barcode.substring(1);
-      console.log(`HACCP - 바코드 정규화 (13자리 오류 수정): ${barcode} -> ${normalizedBarcode} (12자리)`);
-    }
-    // 13자리이고 정상적인 경우
+    // 13자리를 14자리로 변환
     else if (barcode.length === 13) {
-      normalizedBarcode = barcode;
-      console.log(`HACCP - 바코드 정상: ${barcode} (13자리)`);
+      normalizedBarcode = '0' + barcode;
+      console.log(`HACCP - 바코드 정규화: ${barcode} (13자리) -> ${normalizedBarcode} (14자리)`);
     }
-    // 12자리인 경우 그대로 사용
-    else if (barcode.length === 12 || barcode.length === 8) {
-      normalizedBarcode = barcode;
-      console.log(`HACCP - 바코드 정상: ${barcode} (${barcode.length}자리)`);
+    // 12자리를 14자리로 변환
+    else if (barcode.length === 12) {
+      normalizedBarcode = '00' + barcode;
+      console.log(`HACCP - 바코드 정규화: ${barcode} (12자리) -> ${normalizedBarcode} (14자리)`);
+    }
+    // 8자리를 14자리로 변환
+    else if (barcode.length === 8) {
+      normalizedBarcode = '000000' + barcode;
+      console.log(`HACCP - 바코드 정규화: ${barcode} (8자리) -> ${normalizedBarcode} (14자리)`);
     }
     else {
       console.warn(`HACCP - 비표준 바코드 길이: ${barcode.length}자리 - ${barcode}`);
@@ -253,11 +249,10 @@ const fetchFromHACCPAPI = async (barcode) => {
 
     console.log(`HACCP API - 원본 바코드: ${barcode}, 정규화된 바코드: ${normalizedBarcode}`);
 
-    // HACCP API 엔드포인트 (한국식품안전관리인증원)
-    // GitHub Pages 배포 시 프록시를 사용할 수 없으므로 직접 API 호출
-    const url = `https://apis.data.go.kr/B553748/CertImgListService/getCertImgListService?serviceKey=${API_KEY}&pageNo=1&numOfRows=10&bar_cd=${normalizedBarcode}`;
+    // HACCP API 직접 호출 (프록시 없이)
+    const url = `http://apis.data.go.kr/B553748/CertImgListService/getCertImgListService?serviceKey=${API_KEY}&pageNo=1&numOfRows=10&brcd_no=${normalizedBarcode}`;
 
-    console.log(`HACCP API 호출: 바코드 ${normalizedBarcode}`);
+    console.log(`HACCP API 직접 호출: 바코드 ${normalizedBarcode}`);
 
     const response = await fetch(url);
     const xmlText = await response.text();

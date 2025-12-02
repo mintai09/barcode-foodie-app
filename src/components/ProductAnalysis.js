@@ -42,13 +42,19 @@ function ProductAnalysis({ product, onReset, speak, isSpeaking, voiceModeEnabled
     } else if (product.riskLevel === 'warning') {
       announcement += `주의가 필요합니다. `;
       announcement += product.riskReasons.join('. ');
+    } else if (product.riskLevel === 'unknown') {
+      announcement += `제품 정보를 확인할 수 없습니다. 안전을 위해 섭취를 권장하지 않습니다.`;
     } else {
       announcement += `안전합니다. ${product.riskReasons[0]}`;
     }
 
-    // 추가 정보
-    announcement += ` 가격은 ${product.price}입니다. `;
-    announcement += `알레르기 유발 성분은 ${product.allergens.join(', ')}입니다.`;
+    // 추가 정보 (제품 정보가 있는 경우만)
+    if (!product.notFound) {
+      announcement += ` 가격은 ${product.price}입니다. `;
+      if (product.allergens.length > 0) {
+        announcement += `알레르기 유발 성분은 ${product.allergens.join(', ')}입니다.`;
+      }
+    }
 
     speak(announcement);
   };

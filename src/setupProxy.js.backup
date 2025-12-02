@@ -1,14 +1,23 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function(app) {
-  // 식약처 푸드QR API 프록시
+  // 식약처 푸드QR API 프록시 - 알레르기 정보 API
   app.use(
     '/api/food',
     createProxyMiddleware({
-      target: 'http://apis.data.go.kr',
+      target: 'https://apis.data.go.kr',
       changeOrigin: true,
       pathRewrite: {
         '^/api/food': '/1471000/FoodQrInfoService01',
+      },
+      secure: false,
+      logLevel: 'debug',
+      onProxyReq: (proxyReq, req, res) => {
+        console.log('[PROXY] 요청:', req.method, req.url);
+        console.log('[PROXY] 프록시 대상:', proxyReq.path);
+      },
+      onError: (err, req, res) => {
+        console.error('[PROXY ERROR]:', err.message);
       },
     })
   );

@@ -90,9 +90,43 @@ AI 챗봇 기능을 사용하려면 로컬 LLM 서버가 필요합니다:
 
 자세한 프롬프트 설정은 [CHATBOT_PROMPT.md](./CHATBOT_PROMPT.md)를 참조하세요.
 
-## 🌐 GitHub Pages 배포
+## 🌐 배포 방법
 
-### 1단계: Repository 설정
+### 추천: Netlify 배포 (CORS 문제 해결됨)
+
+Netlify는 서버리스 함수를 제공하여 CORS 문제를 해결할 수 있습니다.
+
+#### 1단계: Netlify 계정 생성
+1. [Netlify](https://www.netlify.com/) 접속
+2. GitHub 계정으로 로그인
+
+#### 2단계: 환경 변수 설정
+1. Netlify 사이트 → `Site settings` → `Environment variables`
+2. 환경 변수 추가:
+   - `REACT_APP_FOOD_API_KEY`: 발급받은 식약처 API 키
+
+#### 3단계: 배포
+```bash
+# Git에 커밋
+git add .
+git commit -m "Add Netlify configuration"
+git push origin main
+
+# Netlify에서 저장소 연결
+# 1. New site from Git
+# 2. GitHub 저장소 선택
+# 3. Build settings:
+#    - Build command: npm run build
+#    - Publish directory: build
+```
+
+Netlify가 자동으로 빌드 및 배포를 진행하고, CORS 문제 없이 API를 호출할 수 있습니다!
+
+### 대안: GitHub Pages 배포
+
+⚠️ **주의**: GitHub Pages는 CORS 제한이 있어 개발 환경에서만 테스트 가능합니다.
+
+#### 1단계: Repository 설정
 
 ```bash
 # Git 저장소 초기화 (아직 안 했다면)
@@ -106,9 +140,7 @@ git remote add origin https://github.com/[YOUR_USERNAME]/barcode-foodie-app.git
 git push -u origin main
 ```
 
-### 2단계: GitHub Secrets 설정 (중요!)
-
-⚠️ **API 키를 안전하게 보호하기 위해 필수입니다.**
+#### 2단계: GitHub Secrets 설정
 
 1. GitHub 저장소 페이지 → `Settings` → `Secrets and variables` → `Actions`
 2. `New repository secret` 클릭
@@ -116,37 +148,18 @@ git push -u origin main
    - Name: `REACT_APP_FOOD_API_KEY`
    - Value: 발급받은 식약처 API 키
 
-### 3단계: package.json 수정
+#### 3단계: package.json 수정
 
 `homepage` 필드를 본인의 GitHub 사용자명으로 수정:
 ```json
 "homepage": "https://[YOUR_GITHUB_USERNAME].github.io/barcode-foodie-app"
 ```
 
-### 4단계: GitHub Actions 워크플로우
-
-`.github/workflows/deploy.yml` 파일이 이미 준비되어 있습니다:
-- 자동 빌드
-- API 키를 환경 변수로 주입
-- gh-pages 브랜치에 자동 배포
-
-### 5단계: 배포 실행
+#### 4단계: 배포 실행
 
 ```bash
-# 변경사항 커밋 및 푸시
-git add .
-git commit -m "Setup GitHub Pages deployment"
-git push origin main
+npm run deploy
 ```
-
-GitHub Actions가 자동으로 빌드 및 배포를 진행합니다.
-
-### 6단계: GitHub Pages 활성화
-
-1. 저장소 `Settings` → `Pages`
-2. Source: `Deploy from a branch`
-3. Branch: `gh-pages` 선택, folder: `/ (root)`
-4. Save
 
 몇 분 후 `https://[YOUR_USERNAME].github.io/barcode-foodie-app`에서 앱 확인!
 

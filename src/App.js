@@ -55,7 +55,11 @@ function App() {
     speak('알레르기 프로필이 완성되었습니다. 이제 제품 바코드를 스캔해주세요.');
   };
 
-  const handleBarcodeScanned = (barcode) => {
+  const handleBarcodeScanned = async (barcode) => {
+    // 바코드 스캔 후 페이지 전환 전에 약간의 지연 추가
+    // 스캐너 정리 시간 확보
+    await new Promise(resolve => setTimeout(resolve, 300));
+
     // 바코드 데이터를 기반으로 제품 분석
     analyzeProduct(barcode);
   };
@@ -93,6 +97,18 @@ function App() {
   const calculateRiskLevel = (product, profile) => {
     if (!profile) return { level: 'unknown', reasons: [] };
 
+    // 제품 정보를 찾을 수 없는 경우 - 위험으로 판정
+    if (product.notFound) {
+      return {
+        level: 'warning',
+        reasons: [
+          '제품 정보를 확인할 수 없습니다',
+          '안전을 위해 제조사에 직접 문의하거나',
+          '제품 포장지의 알레르기 정보를 직접 확인해주세요'
+        ]
+      };
+    }
+
     const userAllergens = profile.allergens.map(a => a.toLowerCase());
     const productAllergens = product.allergens.map(a => a.toLowerCase());
     const reasons = [];
@@ -129,6 +145,8 @@ function App() {
     } else if (riskLevel.level === 'warning') {
       announcement += `주의가 필요합니다. `;
       announcement += riskLevel.reasons.join('. ');
+    } else if (riskLevel.level === 'unknown') {
+      announcement += `제품 정보를 확인할 수 없습니다. 안전을 위해 섭취를 권장하지 않습니다.`;
     } else {
       announcement += `안전합니다. ${riskLevel.reasons[0]}`;
     }
