@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/barcode-foodie-app/static/css/main.18cd3045.css",
-    "main.js": "/barcode-foodie-app/static/js/main.da3ab26d.js",
+    "main.js": "/barcode-foodie-app/static/js/main.a9795a6d.js",
     "index.html": "/barcode-foodie-app/index.html",
     "main.18cd3045.css.map": "/barcode-foodie-app/static/css/main.18cd3045.css.map",
-    "main.da3ab26d.js.map": "/barcode-foodie-app/static/js/main.da3ab26d.js.map"
+    "main.a9795a6d.js.map": "/barcode-foodie-app/static/js/main.a9795a6d.js.map"
   },
   "entrypoints": [
     "static/css/main.18cd3045.css",
-    "static/js/main.da3ab26d.js"
+    "static/js/main.a9795a6d.js"
   ]
 }
